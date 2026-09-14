@@ -1,0 +1,10 @@
+# OS junk
+.DS_Store
+
+# Excel / Office files (not part of the codebase)
+*.xls
+*.xlsx
+~$*
+
+# Editor / misc
+*.log
