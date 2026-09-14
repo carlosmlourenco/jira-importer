@@ -4,32 +4,6 @@
 // =============================================
 
 // =============================================
-// FIELD REFERENCE — available fields for future use
-// =============================================
-// # of Approved Hours          customfield_13750   number
-// # of Requested Hours         customfield_14083   number
-// Total Remaining Hours        customfield_20108   number
-// Non-billable hours helper    customfield_14471   string
-// Approvers                    customfield_11905   array
-// Pre-Approved                 customfield_12644   option
-// Data Science Approver        customfield_11786   user
-// Engineering Approver         customfield_11785   user
-// Cloud Operations Approvers   customfield_12580   array
-// COPS Financial Approvers     customfield_15471   array
-// Approval from Groups         customfield_16403   array
-// Approved CSSM Depl. Request  customfield_16434   array
-// Approvals                    customfield_11870   sd-approvals
-// Approved by                  customfield_11170   user
-// Approved by (read only)      customfield_11171   string
-// Approved on                  customfield_11172   datetime
-// Approved on (read only)      customfield_11173   string
-// Funding Proof of Approval    customfield_22700   string
-// Expedite Priority            customfield_20340   string
-// Expedite Approved By         customfield_26408   option
-// Approvers (migrated)         customfield_20726   array
-// Approver groups (migrated)   customfield_20790   array
-
-// =============================================
 // CONFIGURATION — shared settings (not sensitive)
 // =============================================
 const JIRA_BASE_URL = "https://fdz.atlassian.net";
