@@ -396,13 +396,15 @@ function processRows(sheet, data, fromIndex, toIndex, creds, projectKey, mode) {
       if (outcome.ok) {
         if (outcome.warning) {
           results.warnings++;
-          statusCell.setValue(existingKey).setBackground("#ffeb9c");
+          setKeyLink(statusCell, existingKey);
+          statusCell.setBackground("#ffeb9c");
           writeNote(notesCell, `⚠️ Updated · ${outcome.warning}`, `${existingKey}\n${outcome.warning}\n${url}`);
           Logger.log(`⚠️ Row ${rowNum}: Updated ${existingKey} (${outcome.warning})`);
           appendImportLog(log, rowNum, summary, "UPDATED (partial)", existingKey, outcome.warning);
         } else {
           results.updated++;
-          statusCell.setValue(existingKey).setBackground("#c6efce");
+          setKeyLink(statusCell, existingKey);
+          statusCell.setBackground("#c6efce");
           writeNote(notesCell, "✏️ Updated", `Updated ${existingKey}\n${url}`);
           Logger.log(`✏️ Row ${rowNum}: Updated ${existingKey}`);
           appendImportLog(log, rowNum, summary, "UPDATED", existingKey, "");
@@ -423,13 +425,15 @@ function processRows(sheet, data, fromIndex, toIndex, creds, projectKey, mode) {
 
       if (outcome.warning) {
         results.warnings++;
-        statusCell.setValue(outcome.key).setBackground("#ffeb9c");
+        setKeyLink(statusCell, outcome.key);
+        statusCell.setBackground("#ffeb9c");
         writeNote(notesCell, `⚠️ ${outcome.warning}`, `${outcome.key}\n${outcome.warning}\n${url}`);
         Logger.log(`⚠️ Row ${rowNum}: Created ${outcome.key} (${outcome.warning}) — ${summary}`);
         appendImportLog(log, rowNum, summary, "CREATED (partial)", outcome.key, outcome.warning);
       } else {
         results.created++;
-        statusCell.setValue(outcome.key).setBackground("#c6efce");
+        setKeyLink(statusCell, outcome.key);
+        statusCell.setBackground("#c6efce");
         writeNote(notesCell, "✅ Imported", `Created ${outcome.key}\n${url}`);
         Logger.log(`✅ Row ${rowNum}: Created ${outcome.key} — ${summary}`);
         appendImportLog(log, rowNum, summary, "CREATED", outcome.key, "");
@@ -489,9 +493,10 @@ function extractIssueKey(cellValue) {
 function recordRowError(results, log, sheet, statusCell, notesCell, rowNum, summary, outcome, keepKey) {
   results.errors.push(`Row ${rowNum} ("${summary}"): ${firstLine(outcome.error)}`);
 
-  // Preserve an existing key on update failures; otherwise mark ERROR.
+  // Preserve an existing key on update failures (keep it clickable); otherwise mark ERROR.
   if (keepKey) {
-    statusCell.setValue(keepKey).setBackground("#ffc7ce");
+    setKeyLink(statusCell, keepKey);
+    statusCell.setBackground("#ffc7ce");
   } else {
     statusCell.setValue("ERROR").setBackground("#ffc7ce");
   }
@@ -504,6 +509,21 @@ function recordRowError(results, log, sheet, statusCell, notesCell, rowNum, summ
 // =============================================
 // LOGGING / REPORTING HELPERS
 // =============================================
+
+// Write a Jira key into a cell as a clickable hyperlink to the issue.
+// Falls back to a plain value if RichText isn't available for any reason.
+function setKeyLink(cell, key) {
+  const url = `${JIRA_BASE_URL}/browse/${key}`;
+  try {
+    const rich = SpreadsheetApp.newRichTextValue()
+      .setText(key)
+      .setLinkUrl(url)
+      .build();
+    cell.setRichTextValue(rich);
+  } catch (e) {
+    cell.setValue(key);
+  }
+}
 
 // Write a short value into the notes cell and attach the full detail as a cell comment/note.
 function writeNote(cell, shortText, fullDetail) {

@@ -5,6 +5,12 @@ All notable changes to the Jira Importer script are documented here.
 ## v2 — current
 
 ### Added
+- **Clickable Jira links** — the "Jira Key" cell is now written as a rich-text
+  hyperlink to the issue (`{base}/browse/{KEY}`) on create and update, so the key
+  can be clicked to open the issue. Falls back to plain text if rich text is
+  unavailable. Reading the cell still returns the key, so skip/update detection is
+  unaffected.
+
 - **Update mode** — pushes sheet values onto existing Jira issues (rows that already
   have a Jira Key). Uses `PUT /rest/api/3/issue/{key}` and treats `204 No Content` as success.
 - **Sync mode** — single pass that creates rows without a key and updates rows with one.

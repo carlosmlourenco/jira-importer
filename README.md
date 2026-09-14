@@ -8,7 +8,8 @@ syncing work items straight from a spreadsheet.
 
 - Reads issue data from the active sheet (one issue per row).
 - Creates new Jira issues, updates existing ones, or both in a single pass.
-- Writes the resulting Jira key back into the sheet and tracks per-row status.
+- Writes the resulting Jira key back into the sheet as a clickable link to the issue,
+  and tracks per-row status.
 - Reports errors in a readable way, including a run log on a dedicated tab.
 
 ## Files
