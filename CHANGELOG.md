@@ -5,6 +5,12 @@ All notable changes to the Jira Importer script are documented here.
 ## v2 — current
 
 ### Fixed
+- **Account field accepts a JSON object in the cell.** Previously only plain-text
+  labels mapped via `ACCOUNT_MAP` worked; a cell containing
+  `{"id": 4, "value": "..."}` was treated as unknown and skipped. New
+  `parseAccountValue` helper accepts a JSON object, a mapped label, or a bare id,
+  and coerces the id to a string (Jira requires `id` as a string).
+
 - **Never drop required fields in the fallback.** Previously the field-drop retry
   could remove a field that Jira reported as required (e.g. Epic Name), which
   guaranteed failure. `parseJiraError` now flags fields whose message says they are

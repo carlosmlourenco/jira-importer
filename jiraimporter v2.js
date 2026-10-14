@@ -994,8 +994,7 @@ function buildIssuePayload(row, skipFields, projectKey, isUpdate) {
 
   // Account — map plain text to {id, value}
   if (!skip(CUSTOM_FIELDS.ACCOUNT) && row[COL.ACCOUNT] && String(row[COL.ACCOUNT]).trim() !== "") {
-    const key        = String(row[COL.ACCOUNT]).trim().toLowerCase();
-    const accountVal = ACCOUNT_MAP[key];
+    const accountVal = parseAccountValue(row[COL.ACCOUNT]);
     if (accountVal) {
       fields[CUSTOM_FIELDS.ACCOUNT] = accountVal;
     } else {
@@ -1004,6 +1003,41 @@ function buildIssuePayload(row, skipFields, projectKey, isUpdate) {
   }
 
   return { fields };
+}
+
+// =============================================
+// HELPER: normalise an Account cell into Jira's { id, value } select format
+// =============================================
+// Accepts any of:
+//   • a JSON object pasted in the cell, e.g. {"id": 4, "value": "Post GoLive billable"}
+//   • plain text that matches ACCOUNT_MAP, e.g. "Post GoLive billable"
+//   • a bare id, e.g. "4"
+// Jira expects the id as a STRING, so numeric ids are coerced.
+function parseAccountValue(raw) {
+  const text = String(raw).trim();
+
+  // 1) JSON object in the cell
+  if (text.charAt(0) === "{") {
+    try {
+      const obj = JSON.parse(text);
+      const out = {};
+      if (obj.id !== undefined && obj.id !== null) out.id = String(obj.id);
+      if (obj.value !== undefined && obj.value !== null) out.value = String(obj.value);
+      // A single-select field needs at least one of id/value.
+      if (out.id || out.value) return out;
+    } catch (e) {
+      Logger.log(`⚠️ Account looked like JSON but failed to parse: ${e.message}`);
+    }
+  }
+
+  // 2) Plain-text label mapped via ACCOUNT_MAP
+  const mapped = ACCOUNT_MAP[text.toLowerCase()];
+  if (mapped) return mapped;
+
+  // 3) Bare numeric id
+  if (/^\d+$/.test(text)) return { id: text };
+
+  return null;
 }
 
 // =============================================
