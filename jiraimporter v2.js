@@ -239,8 +239,11 @@ function onOpen() {
     .addItem("✏️ Update Selected Rows (with Jira Key)", "updateSelectedInJira")
     .addSeparator()
     .addItem("🧪 Test Connection",           "testConnection")
-    .addItem("🔎 Show Required Fields for Issue Type…", "showRequiredFields")
-    .addItem("🔬 Inspect Existing Issue Fields…",       "inspectIssueFields")
+    // Diagnostics kept in code but off the menu to reduce clutter. To use them,
+    // run showRequiredFields / inspectIssueFields from the Apps Script editor
+    // (Run → select function), or temporarily re-add the lines below:
+    // .addItem("🔎 Show Required Fields for Issue Type…", "showRequiredFields")
+    // .addItem("🔬 Inspect Existing Issue Fields…",       "inspectIssueFields")
     .addSeparator()
     .addItem("⚙️ Setup My Jira Credentials", "setupCredentials")
     .addItem("🗑️ Clear My Credentials",      "clearCredentials")
