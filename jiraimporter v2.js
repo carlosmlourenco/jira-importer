@@ -19,11 +19,6 @@ const CUSTOM_FIELDS = {
   ACCOUNT:             "customfield_16433",
   APPROVED_HOURS:      "customfield_13750",
   START_DATE:          "customfield_16414",
-  // "Epic Name" — required when creating Epics in company-managed projects.
-  // The id varies per Jira instance; the common default is customfield_10011.
-  // If epics still fail, check the real id in Jira (⚙ → Issues → Custom fields)
-  // and update this value. The field is auto-dropped on retry if not needed.
-  EPIC_NAME:           "customfield_10011",
 };
 
 // =============================================
@@ -38,7 +33,6 @@ const FIELD_LABELS = {
   "duedate":             "Due Date",
   "timeoriginalestimate":"Original Estimate",
   "timetracking":        "Original Estimate (time tracking)",
-  "customfield_10011":   "Epic Name",
   "customfield_16455":   "Initiative",
   "customfield_11371":   "Acceptance Criteria",
   "customfield_14391":   "CS Functional Group",
@@ -308,17 +302,20 @@ function showRequiredFields() {
   }
 
   const required = [];
-  const optional = [];
+  let optionalCount = 0;
   for (const fieldId in itype.fields) {
-    const f    = itype.fields[fieldId];
-    const line = `${f.name}  →  ${fieldId}`;
-    if (f.required) required.push(line); else optional.push(line);
+    const f = itype.fields[fieldId];
+    if (!f.required) { optionalCount++; continue; }
+    // Describe the expected shape so we know how to build the payload.
+    const schema = f.schema || {};
+    const type   = schema.type || "?";
+    const items  = schema.items ? `<${schema.items}>` : "";
+    required.push(`${f.name}  →  ${fieldId}\n     type: ${type}${items}`);
   }
 
   let msg = `Issue type: ${issueType}   Project: ${projectKey}\n\n`;
-  msg += `REQUIRED fields (${required.length}):\n` + (required.length ? required.join("\n") : "  (none)");
-  msg += `\n\nOptional fields: ${optional.length} (not listed)`;
-  msg += `\n\nTip: if "Epic Name" shows a different id than customfield_10011,\nupdate CUSTOM_FIELDS.EPIC_NAME in the script to that id.`;
+  msg += `REQUIRED fields (${required.length}):\n\n` + (required.length ? required.join("\n") : "  (none)");
+  msg += `\n\nOptional fields: ${optionalCount} (not listed)`;
 
   ui.alert("🔎 Required fields", msg + FOOTER, ui.ButtonSet.OK);
 }
@@ -751,10 +748,9 @@ function createIssueWithFallback(row, rowIndex, creds, projectKey) {
 }
 
 // Fields we are allowed to drop and still produce a useful issue.
-// Core fields (summary, project, issuetype) and Epic Name must never be dropped —
-// dropping Epic Name when creating an Epic guarantees a "required" failure.
+// Core fields (summary, project, issuetype) must never be dropped.
 function isSkippableField(fieldId) {
-  const NEVER_DROP = ["summary", "project", "issuetype", CUSTOM_FIELDS.EPIC_NAME];
+  const NEVER_DROP = ["summary", "project", "issuetype"];
   return NEVER_DROP.indexOf(fieldId) === -1;
 }
 
@@ -827,13 +823,6 @@ function buildIssuePayload(row, skipFields, projectKey, isUpdate) {
     const issueType  = row[COL.ISSUE_TYPE] ? String(row[COL.ISSUE_TYPE]).trim() : "Task";
     fields.project   = { key: projectKey };
     fields.issuetype = { name: issueType };
-
-    // Epic Name — many company-managed projects require this when creating an Epic.
-    // Default it to the summary. Dropped automatically on retry if the instance
-    // doesn't use it (e.g. team-managed projects).
-    if (!skip(CUSTOM_FIELDS.EPIC_NAME) && issueType.toLowerCase() === "epic") {
-      fields[CUSTOM_FIELDS.EPIC_NAME] = String(row[COL.SUMMARY]).trim();
-    }
   }
 
   // Description
