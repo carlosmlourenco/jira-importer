@@ -235,6 +235,7 @@ function onOpen() {
     .addSeparator()
     .addItem("🧪 Test Connection",           "testConnection")
     .addItem("🔎 Show Required Fields for Issue Type…", "showRequiredFields")
+    .addItem("🔬 Inspect Existing Issue Fields…",       "inspectIssueFields")
     .addSeparator()
     .addItem("⚙️ Setup My Jira Credentials", "setupCredentials")
     .addItem("🗑️ Clear My Credentials",      "clearCredentials")
@@ -246,6 +247,74 @@ function onOpen() {
 // =============================================
 // Uses GET /rest/api/3/issue/createmeta so you can see the exact field IDs your
 // Jira instance expects (e.g. the real "Epic Name" custom field id).
+// Fetch an existing issue and show the real IDs + current values of any field
+// whose NAME contains the search term (default "epic"). This finds fields that
+// createmeta hides but that validators still require.
+function inspectIssueFields() {
+  const creds = requireCredentials();
+  if (!creds) return;
+  const ui = SpreadsheetApp.getUi();
+
+  const keyResp = ui.prompt(
+    "Inspect an existing issue",
+    "Enter an existing issue key to read (ideally an existing Epic):\n(e.g. TWIN-123)" + FOOTER,
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (keyResp.getSelectedButton() !== ui.Button.OK) return;
+  const issueKey = keyResp.getResponseText().trim();
+  if (!issueKey) return;
+
+  const termResp = ui.prompt(
+    "Filter fields",
+    "Show fields whose NAME contains (leave blank for 'epic'):" + FOOTER,
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (termResp.getSelectedButton() !== ui.Button.OK) return;
+  const term = (termResp.getResponseText().trim() || "epic").toLowerCase();
+
+  const credentials = Utilities.base64Encode(`${creds.email}:${creds.token}`);
+  // expand=names gives us a fieldId → human name map alongside the values.
+  const url = `${JIRA_BASE_URL}/rest/api/3/issue/${encodeURIComponent(issueKey)}?expand=names`;
+
+  let body;
+  try {
+    const resp = UrlFetchApp.fetch(url, {
+      method: "get",
+      headers: { "Authorization": `Basic ${credentials}`, "Accept": "application/json" },
+      muteHttpExceptions: true,
+    });
+    if (resp.getResponseCode() !== 200) {
+      ui.alert("❌ Could not read issue",
+        `HTTP ${resp.getResponseCode()}\n${resp.getContentText().slice(0, 400)}` + FOOTER,
+        ui.ButtonSet.OK);
+      return;
+    }
+    body = JSON.parse(resp.getContentText());
+  } catch (e) {
+    ui.alert("❌ Error", e.message + FOOTER, ui.ButtonSet.OK);
+    return;
+  }
+
+  const names  = body.names || {};
+  const fields = body.fields || {};
+  const matches = [];
+  for (const fieldId in names) {
+    const name = String(names[fieldId] || "");
+    if (name.toLowerCase().indexOf(term) !== -1) {
+      let val = fields[fieldId];
+      val = (val === null || val === undefined) ? "(empty)" : JSON.stringify(val);
+      if (val.length > 80) val = val.slice(0, 80) + "…";
+      matches.push(`${name}  →  ${fieldId}\n     value: ${val}`);
+    }
+  }
+
+  let msg = `Issue: ${issueKey}\nFields whose name contains "${term}":\n\n`;
+  msg += matches.length ? matches.join("\n") : "(no matching fields)";
+  msg += `\n\nThe field that is NOT empty on an Epic is your Epic Name field.\nSet CUSTOM_FIELDS to that id.`;
+
+  ui.alert("🔬 Issue field inspector", msg + FOOTER, ui.ButtonSet.OK);
+}
+
 function showRequiredFields() {
   const creds = requireCredentials();
   if (!creds) return;
