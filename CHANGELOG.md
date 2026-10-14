@@ -12,7 +12,12 @@ All notable changes to the Jira Importer script are documented here.
 
 ### Added
 - **Epic Name on epic create** — when Issue Type is `Epic`, the Epic Name field
-  (default `customfield_10011`, configurable in `CUSTOM_FIELDS`) is set to the summary.
+  (`customfield_10371` for this instance) is set to the summary and protected from
+  the field-drop fallback. This field is required by a validator even though it is
+  not reported by `createmeta`.
+- **Diagnostics**: `🔎 Show Required Fields for Issue Type…` (lists required fields +
+  schema types from createmeta) and `🔬 Inspect Existing Issue Fields…` (reads a live
+  issue and shows field ids/values by name match — used to find the real Epic Name id).
 - **Clickable Jira links** — the "Jira Key" cell is now written as a rich-text
   hyperlink to the issue (`{base}/browse/{KEY}`) on create and update, so the key
   can be clicked to open the issue. Falls back to plain text if rich text is

@@ -19,6 +19,10 @@ const CUSTOM_FIELDS = {
   ACCOUNT:             "customfield_16433",
   APPROVED_HOURS:      "customfield_13750",
   START_DATE:          "customfield_16414",
+  // "Epic Name" — required when creating Epics in this instance. Confirmed id for
+  // the fdz.atlassian.net Jira via the Inspect Issue Fields diagnostic (TWIN-464).
+  // Note: createmeta does NOT list this field, but a validator still requires it.
+  EPIC_NAME:           "customfield_10371",
 };
 
 // =============================================
@@ -33,6 +37,7 @@ const FIELD_LABELS = {
   "duedate":             "Due Date",
   "timeoriginalestimate":"Original Estimate",
   "timetracking":        "Original Estimate (time tracking)",
+  "customfield_10371":   "Epic Name",
   "customfield_16455":   "Initiative",
   "customfield_11371":   "Acceptance Criteria",
   "customfield_14391":   "CS Functional Group",
@@ -817,9 +822,10 @@ function createIssueWithFallback(row, rowIndex, creds, projectKey) {
 }
 
 // Fields we are allowed to drop and still produce a useful issue.
-// Core fields (summary, project, issuetype) must never be dropped.
+// Core fields (summary, project, issuetype) and Epic Name must never be dropped —
+// dropping Epic Name when creating an Epic guarantees a "required" failure.
 function isSkippableField(fieldId) {
-  const NEVER_DROP = ["summary", "project", "issuetype"];
+  const NEVER_DROP = ["summary", "project", "issuetype", CUSTOM_FIELDS.EPIC_NAME];
   return NEVER_DROP.indexOf(fieldId) === -1;
 }
 
@@ -892,6 +898,13 @@ function buildIssuePayload(row, skipFields, projectKey, isUpdate) {
     const issueType  = row[COL.ISSUE_TYPE] ? String(row[COL.ISSUE_TYPE]).trim() : "Task";
     fields.project   = { key: projectKey };
     fields.issuetype = { name: issueType };
+
+    // Epic Name — required when creating an Epic on this instance (customfield_10371).
+    // createmeta hides it, but a validator enforces it, so always send it for Epics,
+    // defaulting to the summary.
+    if (!skip(CUSTOM_FIELDS.EPIC_NAME) && issueType.toLowerCase() === "epic") {
+      fields[CUSTOM_FIELDS.EPIC_NAME] = String(row[COL.SUMMARY]).trim();
+    }
   }
 
   // Description
