@@ -19,6 +19,11 @@ const CUSTOM_FIELDS = {
   ACCOUNT:             "customfield_16433",
   APPROVED_HOURS:      "customfield_13750",
   START_DATE:          "customfield_16414",
+  // "Epic Name" — required when creating Epics in company-managed projects.
+  // The id varies per Jira instance; the common default is customfield_10011.
+  // If epics still fail, check the real id in Jira (⚙ → Issues → Custom fields)
+  // and update this value. The field is auto-dropped on retry if not needed.
+  EPIC_NAME:           "customfield_10011",
 };
 
 // =============================================
@@ -33,6 +38,7 @@ const FIELD_LABELS = {
   "duedate":             "Due Date",
   "timeoriginalestimate":"Original Estimate",
   "timetracking":        "Original Estimate (time tracking)",
+  "customfield_10011":   "Epic Name",
   "customfield_16455":   "Initiative",
   "customfield_11371":   "Acceptance Criteria",
   "customfield_14391":   "CS Functional Group",
@@ -736,8 +742,16 @@ function buildIssuePayload(row, skipFields, projectKey, isUpdate) {
 
   if (!isUpdate) {
     // Create-only fields: project & issue type are set at creation time.
+    const issueType  = row[COL.ISSUE_TYPE] ? String(row[COL.ISSUE_TYPE]).trim() : "Task";
     fields.project   = { key: projectKey };
-    fields.issuetype = { name: row[COL.ISSUE_TYPE] ? String(row[COL.ISSUE_TYPE]).trim() : "Task" };
+    fields.issuetype = { name: issueType };
+
+    // Epic Name — many company-managed projects require this when creating an Epic.
+    // Default it to the summary. Dropped automatically on retry if the instance
+    // doesn't use it (e.g. team-managed projects).
+    if (!skip(CUSTOM_FIELDS.EPIC_NAME) && issueType.toLowerCase() === "epic") {
+      fields[CUSTOM_FIELDS.EPIC_NAME] = String(row[COL.SUMMARY]).trim();
+    }
   }
 
   // Description
@@ -974,13 +988,19 @@ function parseJiraError(code, body, rawText) {
   if (body && body.errors && typeof body.errors === "object") {
     for (const fieldId in body.errors) {
       badFields.push(fieldId);
-      parts.push(`• ${fieldLabel(fieldId)}: ${body.errors[fieldId]}`);
+      const detail = body.errors[fieldId] || "(no message — field may be required or not on the create screen)";
+      parts.push(`• ${fieldLabel(fieldId)}: ${detail}`);
     }
   }
 
   // Global messages: { errorMessages: ["...", "..."] }
   if (body && Array.isArray(body.errorMessages) && body.errorMessages.length) {
     body.errorMessages.forEach(m => parts.push(`• ${m}`));
+  }
+
+  // Some 400s return a single top-level message instead of the above shapes.
+  if (!parts.length && body && typeof body.message === "string" && body.message) {
+    parts.push(`• ${body.message}`);
   }
 
   // Categorise for friendlier top-line guidance
@@ -1007,7 +1027,7 @@ function parseJiraError(code, body, rawText) {
   let message = headline;
   if (parts.length) message += "\n" + parts.join("\n");
   // Fall back to raw text if Jira gave us nothing structured
-  if (!parts.length && rawText) message += `\n${String(rawText).slice(0, 300)}`;
+  if (!parts.length && rawText) message += `\n${String(rawText).slice(0, 600)}`;
 
   return { message, category, badFields };
 }
