@@ -4,7 +4,15 @@ All notable changes to the Jira Importer script are documented here.
 
 ## v2 — current
 
+### Fixed
+- **Never drop required fields in the fallback.** Previously the field-drop retry
+  could remove a field that Jira reported as required (e.g. Epic Name), which
+  guaranteed failure. `parseJiraError` now flags fields whose message says they are
+  required, and both the create and update fallbacks exclude those from the drop set.
+
 ### Added
+- **Epic Name on epic create** — when Issue Type is `Epic`, the Epic Name field
+  (default `customfield_10011`, configurable in `CUSTOM_FIELDS`) is set to the summary.
 - **Clickable Jira links** — the "Jira Key" cell is now written as a rich-text
   hyperlink to the issue (`{base}/browse/{KEY}`) on create and update, so the key
   can be clicked to open the issue. Falls back to plain text if rich text is

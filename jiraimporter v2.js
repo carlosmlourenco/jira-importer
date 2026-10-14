@@ -641,9 +641,13 @@ function createIssueWithFallback(row, rowIndex, creds, projectKey) {
         && Array.isArray(e.badFields)
         && e.badFields.length > 0;
 
-      // Find rejected fields we haven't already dropped and that we know how to skip.
+      // Never drop a field Jira says is REQUIRED — dropping it guarantees failure.
+      const required = Array.isArray(e.requiredFields) ? e.requiredFields : [];
+
+      // Find rejected fields we haven't already dropped, that we may skip, and that
+      // aren't required by Jira.
       const newlyBad = recoverable
-        ? e.badFields.filter(f => !skipFields[f] && isSkippableField(f))
+        ? e.badFields.filter(f => !skipFields[f] && isSkippableField(f) && required.indexOf(f) === -1)
         : [];
 
       if (newlyBad.length === 0) {
@@ -911,6 +915,7 @@ function createJiraIssue(payload, creds) {
   err.category    = parsed.category;   // "auth" | "permission" | "field" | "http"
   err.httpCode    = code;
   err.badFields   = parsed.badFields;  // array of field ids that Jira rejected
+  err.requiredFields = parsed.requiredFields;  // subset Jira says are required
   err.rawResponse = rawText;
   throw err;
 }
@@ -972,6 +977,7 @@ function updateJiraIssue(issueKey, payload, creds) {
   err.category    = parsed.category;
   err.httpCode    = code;
   err.badFields   = parsed.badFields;
+  err.requiredFields = parsed.requiredFields;
   err.rawResponse = rawText;
   throw err;
 }
@@ -981,14 +987,18 @@ function updateJiraIssue(issueKey, payload, creds) {
 // =============================================
 // Returns: { message, category, badFields: [fieldId,...] }
 function parseJiraError(code, body, rawText) {
-  const badFields = [];
-  const parts     = [];
+  const badFields      = [];
+  const requiredFields = [];   // fields Jira says are REQUIRED — must never be dropped
+  const parts          = [];
 
   // Field-specific errors: { errors: { "customfield_16414": "msg", ... } }
   if (body && body.errors && typeof body.errors === "object") {
     for (const fieldId in body.errors) {
       badFields.push(fieldId);
       const detail = body.errors[fieldId] || "(no message — field may be required or not on the create screen)";
+      if (/is required|must be provided|cannot be empty/i.test(String(detail))) {
+        requiredFields.push(fieldId);
+      }
       parts.push(`• ${fieldLabel(fieldId)}: ${detail}`);
     }
   }
@@ -1029,7 +1039,7 @@ function parseJiraError(code, body, rawText) {
   // Fall back to raw text if Jira gave us nothing structured
   if (!parts.length && rawText) message += `\n${String(rawText).slice(0, 600)}`;
 
-  return { message, category, badFields };
+  return { message, category, badFields, requiredFields };
 }
 
 // =============================================
