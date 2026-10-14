@@ -240,10 +240,87 @@ function onOpen() {
     .addItem("✏️ Update Selected Rows (with Jira Key)", "updateSelectedInJira")
     .addSeparator()
     .addItem("🧪 Test Connection",           "testConnection")
+    .addItem("🔎 Show Required Fields for Issue Type…", "showRequiredFields")
     .addSeparator()
     .addItem("⚙️ Setup My Jira Credentials", "setupCredentials")
     .addItem("🗑️ Clear My Credentials",      "clearCredentials")
     .addToUi();
+}
+
+// =============================================
+// DIAGNOSTIC — list the required fields (with real IDs) for an issue type
+// =============================================
+// Uses GET /rest/api/3/issue/createmeta so you can see the exact field IDs your
+// Jira instance expects (e.g. the real "Epic Name" custom field id).
+function showRequiredFields() {
+  const creds = requireCredentials();
+  if (!creds) return;
+
+  const ui = SpreadsheetApp.getUi();
+
+  const projectKey = askProjectKey();
+  if (!projectKey) return;
+
+  const typeResp = ui.prompt(
+    "Required Fields",
+    "Enter the issue type to inspect:\n(e.g. Epic, Story, Task)" + FOOTER,
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (typeResp.getSelectedButton() !== ui.Button.OK) return;
+  const issueType = typeResp.getResponseText().trim();
+  if (!issueType) return;
+
+  const credentials = Utilities.base64Encode(`${creds.email}:${creds.token}`);
+  const url =
+    `${JIRA_BASE_URL}/rest/api/3/issue/createmeta` +
+    `?projectKeys=${encodeURIComponent(projectKey)}` +
+    `&issuetypeNames=${encodeURIComponent(issueType)}` +
+    `&expand=projects.issuetypes.fields`;
+
+  let body;
+  try {
+    const response = UrlFetchApp.fetch(url, {
+      method:             "get",
+      headers:            { "Authorization": `Basic ${credentials}`, "Accept": "application/json" },
+      muteHttpExceptions: true,
+    });
+    if (response.getResponseCode() !== 200) {
+      ui.alert("❌ Could not fetch metadata",
+        `HTTP ${response.getResponseCode()}\n${response.getContentText().slice(0, 400)}` + FOOTER,
+        ui.ButtonSet.OK);
+      return;
+    }
+    body = JSON.parse(response.getContentText());
+  } catch (e) {
+    ui.alert("❌ Error", e.message + FOOTER, ui.ButtonSet.OK);
+    return;
+  }
+
+  // Drill into projects[0].issuetypes[0].fields
+  const project = body.projects && body.projects[0];
+  const itype   = project && project.issuetypes && project.issuetypes[0];
+  if (!itype || !itype.fields) {
+    ui.alert("No data",
+      `No create metadata found for "${issueType}" in "${projectKey}".\n` +
+      `Check the type name and your permissions.` + FOOTER,
+      ui.ButtonSet.OK);
+    return;
+  }
+
+  const required = [];
+  const optional = [];
+  for (const fieldId in itype.fields) {
+    const f    = itype.fields[fieldId];
+    const line = `${f.name}  →  ${fieldId}`;
+    if (f.required) required.push(line); else optional.push(line);
+  }
+
+  let msg = `Issue type: ${issueType}   Project: ${projectKey}\n\n`;
+  msg += `REQUIRED fields (${required.length}):\n` + (required.length ? required.join("\n") : "  (none)");
+  msg += `\n\nOptional fields: ${optional.length} (not listed)`;
+  msg += `\n\nTip: if "Epic Name" shows a different id than customfield_10011,\nupdate CUSTOM_FIELDS.EPIC_NAME in the script to that id.`;
+
+  ui.alert("🔎 Required fields", msg + FOOTER, ui.ButtonSet.OK);
 }
 
 // =============================================
@@ -674,10 +751,11 @@ function createIssueWithFallback(row, rowIndex, creds, projectKey) {
 }
 
 // Fields we are allowed to drop and still produce a useful issue.
-// Core fields (summary, project, issuetype) must never be dropped.
+// Core fields (summary, project, issuetype) and Epic Name must never be dropped —
+// dropping Epic Name when creating an Epic guarantees a "required" failure.
 function isSkippableField(fieldId) {
-  const REQUIRED = ["summary", "project", "issuetype"];
-  return REQUIRED.indexOf(fieldId) === -1;
+  const NEVER_DROP = ["summary", "project", "issuetype", CUSTOM_FIELDS.EPIC_NAME];
+  return NEVER_DROP.indexOf(fieldId) === -1;
 }
 
 // =============================================
