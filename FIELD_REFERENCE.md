@@ -31,7 +31,7 @@ top of `jiraimporter v2.js`.
 
 ## Fields already wired into the importer
 
-See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.1.js`:
+See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.2.js`:
 
 | Field | ID |
 |-------|----|

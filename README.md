@@ -17,7 +17,8 @@ back from Jira into the sheet. Built for bulk importing and for PM reporting.
 
 | File | Description |
 |------|-------------|
-| `jiraimporter v3.1.js` | Current version. Adds the Labels field and sources write modes from the `Bulk Import` sheet. |
+| `jiraimporter v3.2.js` | Current version. Routes **Service Request** issues to the **DTS** project on create. |
+| `jiraimporter v3.1.js` | Adds the Labels field and sources write modes from the `Bulk Import` sheet. |
 | `jiraimporter v3.0.js` | Adds **Get Jira Data** (read from Jira); migrates JQL search to the enhanced endpoint. |
 | `jiraimporter v2.js`   | Create / Update / Sync modes, richer error reporting, help menu. |
 | `jiraimporter v1.1.js` | Earlier iteration. |
@@ -29,7 +30,7 @@ bound to your Google Sheet (Extensions → Apps Script).
 ## Setup
 
 1. Open your Google Sheet → **Extensions → Apps Script**.
-2. Paste the contents of `jiraimporter v3.1.js`.
+2. Paste the contents of `jiraimporter v3.2.js`.
 3. Reload the sheet. A **🚀 Jira Importer by Carloszai** menu appears.
 4. Run **⚙️ Setup My Jira Credentials** and enter your Jira email + API token.
    - Get an API token at: https://id.atlassian.com/manage-profile/security/api-tokens
@@ -54,6 +55,8 @@ Notes:
   value is pushed on each run.
 - A **blank** cell does **not** clear the field in Jira; it is simply omitted.
 - Project and Issue Type are only set when creating, not when updating.
+- Issue Type **Service Request** is always created in the **DTS** project, regardless
+  of the project you pick at the prompt. All other types use the prompted project.
 - **Selected Rows** actions require you to be on the `Bulk Import` sheet with the rows
   selected.
 - Use the **❓ Help** menu item inside the sheet for the same explanation.

@@ -2,7 +2,18 @@
 
 All notable changes to the Jira Importer script are documented here.
 
-## v3.1 — current
+## v3.2 — current
+
+### Added
+- **Project routing by issue type (create only).** Issues whose Issue Type is
+  **Service Request** are always created in the **DTS** project, regardless of the
+  project chosen at the prompt. Every other issue type uses the prompted project as
+  before. The parent link is still attempted for DTS Service Requests; if Jira rejects
+  a cross-project parent, the existing field-drop fallback handles it. Matched
+  case-insensitively; configurable via `SERVICE_REQUEST_ISSUE_TYPE` /
+  `SERVICE_REQUEST_PROJECT`.
+
+## v3.1
 
 ### Added
 - **Labels field (column M).** New `labels` mapping on the import side. The cell is
