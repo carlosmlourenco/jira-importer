@@ -1,24 +1,6 @@
 // =============================================
 // 🚀 Jira Importer by Carloszai — v3.2
-// =============================================
-// CHANGELOG
-// v3.2:
-//   • Project routing by issue type (create only): "Service Request" issues are
-//     ALWAYS created in the DTS project, regardless of the project chosen at the
-//     prompt. Every other issue type uses the prompted project as before.
-//     The parent link is still attempted for DTS Service Requests; if Jira
-//     rejects a cross-project parent, the field-drop fallback handles it.
-// v3.1:
-//   • Added "Labels" field to imports (column M). Comma-separated in the cell,
-//     sent to Jira's standard `labels` field on both create and update.
-//     Labels can't contain spaces — type them with underscores (e.g.
-//     DT_Activation_Team). Labels is auto-droppable on retry if Jira rejects it.
-//   • Write modes (Import / Update / Sync) now ALWAYS read from the sheet named
-//     "Bulk Import" (looked up by name), instead of whatever tab is active.
-//     A clear error is shown if that sheet is missing.
-//   • Help text updated to reference the "Bulk Import" sheet.
-// v3.0:
-//   • Two-way: write to Jira (Import/Update/Sync) + read from Jira (Get Jira Data).
+// Setup, modes, and version history: see README.md and CHANGELOG.md
 // =============================================
 
 // =============================================
