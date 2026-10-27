@@ -2,7 +2,43 @@
 
 All notable changes to the Jira Importer script are documented here.
 
-## v2 — current
+## v3.1 — current
+
+### Added
+- **Labels field (column M).** New `labels` mapping on the import side. The cell is
+  comma-separated (e.g. `dt_cs, dt_bluefcu`); the script splits, trims, drops empties,
+  and sends Jira's standard `labels` field. Applied on **both create and update**, and
+  left in the field-drop fallback so a rejected label doesn't fail the whole row.
+  Labels cannot contain spaces in Jira — type them with underscores (e.g.
+  `DT_Activation_Team`).
+
+### Changed
+- **Write modes read from the "Bulk Import" sheet by name.** Import / Update / Sync no
+  longer act on whatever tab is active — they always read rows from a sheet named
+  `Bulk Import`, with a clear error if it's missing. "Selected Rows" actions still
+  require you to be on the `Bulk Import` sheet with the rows selected.
+- Help text updated to describe the `Bulk Import` source sheet and the Labels column.
+
+## v3.0
+
+### Added
+- **Get Jira Data (read from Jira).** New one-click export that pulls issues OUT of
+  Jira into a sheet named `Jira`, replacing the "Jira Cloud for Sheets" extension.
+  Reads a JQL query (or a bare project key) from `Assets!B3`, pages through the
+  enhanced `/rest/api/3/search/jql` endpoint, and writes a fixed 22-column layout.
+  Formatting matches the extension: dates as `DD/MM/YYYY HH:MM:SS`, time estimates as
+  raw seconds (so downstream `/3600` formulas keep working). Clears only columns A–V,
+  leaving user helper columns to the right intact.
+- **Last-run timestamp** written to `Assets!B5` (a real datetime value) on each
+  successful export.
+
+### Changed
+- Migrated JQL search from the removed legacy `/rest/api/3/search` endpoint
+  (Atlassian HTTP 410 / CHANGE-2046) to the enhanced `/rest/api/3/search/jql`
+  endpoint with cursor-based pagination (`nextPageToken`).
+- Help dialog reworked to cover both directions (write to Jira + read from Jira).
+
+## v2
 
 ### Fixed
 - **Account field accepts a JSON object in the cell.** Previously only plain-text

@@ -31,7 +31,7 @@ top of `jiraimporter v2.js`.
 
 ## Fields already wired into the importer
 
-See `CUSTOM_FIELDS` in `jiraimporter v2.js`:
+See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.1.js`:
 
 | Field | ID |
 |-------|----|
@@ -42,3 +42,5 @@ See `CUSTOM_FIELDS` in `jiraimporter v2.js`:
 | Account | `customfield_16433` |
 | # of Approved Hours | `customfield_13750` |
 | Start Date | `customfield_16414` |
+| Epic Name | `customfield_10371` (set to summary on Epic create) |
+| Labels | `labels` (standard field; comma-separated cell, column M) |
