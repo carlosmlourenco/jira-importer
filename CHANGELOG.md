@@ -2,7 +2,27 @@
 
 All notable changes to the Jira Importer script are documented here.
 
-## v3.2 — current
+## v3.3 — current
+
+### Added
+- **DTS Service Request required fields.** Creating a Service Request (routed to DTS
+  since v3.2) now also sends the three fields the DTS project requires:
+  - **DT Service Catalogue** (`customfield_25906`) — chosen **per row** in a new
+    **column N**. The cell takes a catalogue label (matched case-insensitively) or a
+    bare option id; mapped to `{ id }` via `DT_SERVICE_CATALOGUE_MAP` (17 options).
+  - **Cluster Team** (`customfield_11073`) and **Roadmap** (`customfield_11477`) —
+    fixed defaults (`18627` / `19215`) applied to every DTS Service Request.
+  All three are sent **only** when routing to DTS, create-only, and are protected from
+  the field-drop fallback (dropping a required field guarantees failure).
+- **`showFieldOptions` diagnostic** — lists the allowed options (label + id) of an
+  option/select field from createmeta `allowedValues`. Used to capture the DT Service
+  Catalogue option list. Editor-only (not on the menu), like the other diagnostics.
+
+### Changed
+- `Bulk Import` column layout extended: **N = DT Service Catalogue**; Jira Key / Jira
+  Notes move to **O / P** (still found by header name, so no positional change needed).
+
+## v3.2
 
 ### Added
 - **Project routing by issue type (create only).** Issues whose Issue Type is

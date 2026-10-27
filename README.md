@@ -17,7 +17,8 @@ back from Jira into the sheet. Built for bulk importing and for PM reporting.
 
 | File | Description |
 |------|-------------|
-| `jiraimporter v3.2.js` | Current version. Routes **Service Request** issues to the **DTS** project on create. |
+| `jiraimporter v3.3.js` | Current version. Sends the DTS-required fields (DT Service Catalogue, Cluster Team, Roadmap) for Service Requests. |
+| `jiraimporter v3.2.js` | Routes **Service Request** issues to the **DTS** project on create. |
 | `jiraimporter v3.1.js` | Adds the Labels field and sources write modes from the `Bulk Import` sheet. |
 | `jiraimporter v3.0.js` | Adds **Get Jira Data** (read from Jira); migrates JQL search to the enhanced endpoint. |
 | `jiraimporter v2.js`   | Create / Update / Sync modes, richer error reporting, help menu. |
@@ -30,7 +31,7 @@ bound to your Google Sheet (Extensions → Apps Script).
 ## Setup
 
 1. Open your Google Sheet → **Extensions → Apps Script**.
-2. Paste the contents of `jiraimporter v3.2.js`.
+2. Paste the contents of `jiraimporter v3.3.js`.
 3. Reload the sheet. A **🚀 Jira Importer by Carloszai** menu appears.
 4. Run **⚙️ Setup My Jira Credentials** and enter your Jira email + API token.
    - Get an API token at: https://id.atlassian.com/manage-profile/security/api-tokens
@@ -57,6 +58,8 @@ Notes:
 - Project and Issue Type are only set when creating, not when updating.
 - Issue Type **Service Request** is always created in the **DTS** project, regardless
   of the project you pick at the prompt. All other types use the prompted project.
+  DTS Service Requests also require a **DT Service Catalogue** value (column N, pick
+  from the dropdown); **Cluster Team** and **Roadmap** are set automatically.
 - **Selected Rows** actions require you to be on the `Bulk Import` sheet with the rows
   selected.
 - Use the **❓ Help** menu item inside the sheet for the same explanation.
@@ -91,6 +94,7 @@ Notes:
 | K | Issue Type |
 | L | Account |
 | M | Labels (comma-separated; no spaces per label — use underscores) |
+| N | DT Service Catalogue (DTS Service Requests only; pick from the dropdown) |
 
 The tool adds two columns on first run: **Jira Key** and **Jira Notes**.
 

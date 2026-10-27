@@ -31,7 +31,7 @@ top of `jiraimporter v2.js`.
 
 ## Fields already wired into the importer
 
-See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.2.js`:
+See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.3.js`:
 
 | Field | ID |
 |-------|----|
@@ -44,3 +44,11 @@ See `CUSTOM_FIELDS` / `COL` in `jiraimporter v3.2.js`:
 | Start Date | `customfield_16414` |
 | Epic Name | `customfield_10371` (set to summary on Epic create) |
 | Labels | `labels` (standard field; comma-separated cell, column M) |
+
+### DTS Service Request required fields (create only, routed to DTS)
+
+| Field | ID | Source |
+|-------|----|--------|
+| DT Service Catalogue | `customfield_25906` | per-row, column N (label→id map, 17 options) |
+| Cluster Team | `customfield_11073` | fixed default `18627` |
+| Roadmap | `customfield_11477` | fixed default `19215` |
